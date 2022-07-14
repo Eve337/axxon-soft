@@ -1,73 +1,61 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useState } from "react";
 import { getUsers, getOrganizations } from "./api";
 
-class App extends Component {
-  state = {
-    loading: true,
-    selectedOrg: null
-  };
-  users = [];
-  organizations = [];
-  componentDidMount() {
+const App = () => {
+  const [isLoading, setLoading] = useState(true);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
     getUsers()
-      .then((users) => (this.users = users))
+      .then((users) => (setUsers(users)))
       .then(() => getOrganizations())
-      .then((organizations) => (this.organizations = organizations))
-      .then(() => this.setState({ loading: false }));
+      .then((organizations) => (setOrganizations(organizations)))
+      .then(() => setLoading(false));
+  }, []);
+
+  const changeSelectedOrg = (org) => {
+    setSelectedOrg(org)
+  };
+
+  const resetSelectedOrg = () => {
+    setSelectedOrg(null);
   }
 
-  selectOrg = (org) => {
-    this.setState({ selectedOrg: org });
-  };
+  if (this.state.loading) {
+    return "Loading...";
+  }
 
-  resetSelectedOrg = () => {
-    this.setState({ selectedOrg: false });
-  };
+  
 
-  render() {
-    if (this.state.loading) {
-      return "Loading...";
-    }
+  /* users.push(
+    <div className="user-list-item">
+      <div>name: {name}</div>
+      <div onClick={() => this.selectOrg(org)}>org: {org}</div>
+    </div>
+  ); */
 
-    let users = [];
-
+  /* if (this.state.selectedOrg) {
+    users = [];
     for (let i = 0; i < this.users.length; i++) {
-      const name = this.users[i].name;
-      let org;
+      const orgId = this.organizations.find(
+        (o) => o.name === this.state.selectedOrg
+      ).id;
 
-      for (let j = 0; j < this.organizations.length; j++) {
-        if (this.organizations[j].id === this.users[i].organization) {
-          org = this.organizations[j].name;
-        }
-      }
-
-      users.push(
-        <div className="user-list-item">
-          <div>name: {name}</div>
-          <div onClick={() => this.selectOrg(org)}>org: {org}</div>
-        </div>
-      );
-    }
-
-    if (this.state.selectedOrg) {
-      users = [];
-      for (let i = 0; i < this.users.length; i++) {
-        const orgId = this.organizations.find(
-          (o) => o.name === this.state.selectedOrg
-        ).id;
-
-        if (this.users[i].organization === orgId) {
-          users.push(
-            <div className="user-list-item">
-              <div>name: {this.users[i].name}</div>
-              <div>org: {this.state.selectedOrg}</div>
-            </div>
-          );
-        }
+      if (this.users[i].organization === orgId) {
+        users.push(
+          <div className="user-list-item">
+            <div>name: {this.users[i].name}</div>
+            <div>org: {this.state.selectedOrg}</div>
+          </div>
+        );
       }
     }
+  } */
 
-    return (
+  return (
+    <>
       <div>
         {this.state.selectedOrg && (
           <button onClick={() => this.resetSelectedOrg()}>
@@ -76,8 +64,8 @@ class App extends Component {
         )}
         <div className="user-list">{users}</div>
       </div>
-    );
-  }
+    </>
+  )
 }
 
 export default App;
