@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getUsers, getOrganizations } from "./api";
-import UserCard from "./components/UserCard/UserCard";
-import { createUserCards, showUsersBySelectedOrgName } from "./service/utils";
+import { createUserCards, promiseHandler, showUsersBySelectedOrgName } from "./service/utils";
+import ErrorMessage from "./components/Error/Error";
+import Loader from "./components/Loader/Loader";
+import UsersList from "./components/UsersList/UsersList";
 
 const App = () => {
   const [isLoading, setLoading] = useState(true);
@@ -13,18 +15,17 @@ const App = () => {
 
   const cardsRef = useRef();
 
-  const handleUsersRequest = async () => getUsers().then((users) => setUsers(users)).catch(() => setIsError(true));
-  const handleOrgsRequest = async () => getOrganizations().then((orgs) => setOrganizations(orgs)).catch(() => setIsError(true));
-
   useEffect(() => {
-    handleUsersRequest();
-    handleOrgsRequest();
+    promiseHandler(getUsers, setUsers, setIsError);
+    promiseHandler(getOrganizations, setOrganizations, setIsError);
   }, []);
 
   useEffect(() => {
     if (users.length && organizations.length) {
       const result = createUserCards(users, organizations);
+      
       cardsRef.current = result;
+
       setUserCards(result);
       setLoading(false);
     }
@@ -44,33 +45,20 @@ const App = () => {
 
   if (isLoading) {
     return (
-      <>
-        Loading...
-      </>
+      <Loader />
     );
   }
-
 
   return (
     <>
       {isError ? 
-        (<>Something went wrong</>) : 
-        (<div>
-          {selectedOrg && (
-            <button onClick={resetSelectedOrg}>
-              reset selected org
-            </button>
-          )}
-          <div className="user-list">
-            {userCards.map(({ name, organizationName, id }) => (
-              <UserCard 
-                changeSelectedOrg={changeSelectedOrg}
-                key={id} 
-                name={name} 
-                organizationName={organizationName} />
-            ))}
-          </div>
-        </div>)
+        <ErrorMessage /> : 
+        <UsersList 
+          userCards={userCards} 
+          selectedOrg={selectedOrg} 
+          resetSelectedOrg={resetSelectedOrg} 
+          changeSelectedOrg={changeSelectedOrg}
+        />
       }
     </>
   )

@@ -19,3 +19,5 @@ export const createUserCards = (users, organization) => {
 }
 
 export const showUsersBySelectedOrgName = (usersCard, selectedName) => usersCard.filter((card) => card.organizationName === selectedName); 
+
+export const promiseHandler = async (promiseReq, dataSetter, errorSetter) => promiseReq().then((users) => dataSetter(users)).catch(() => errorSetter(true));
