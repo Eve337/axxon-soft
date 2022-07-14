@@ -1,83 +1,67 @@
-import React, { Component } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getUsers, getOrganizations } from "./api";
+import { createUserCards, promiseHandler, showUsersBySelectedOrgName } from "./service/utils";
+import ErrorMessage from "./components/Error/Error";
+import Loader from "./components/Loader/Loader";
+import UsersList from "./components/UsersList/UsersList";
 
-class App extends Component {
-  state = {
-    loading: true,
-    selectedOrg: null
+const App = () => {
+  const [isLoading, setLoading] = useState(true);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [userCards, setUserCards] = useState([]);
+  const [isError, setIsError] = useState(false);
+
+  const cardsRef = useRef();
+
+  useEffect(() => {
+    promiseHandler(getUsers, setUsers, setIsError);
+    promiseHandler(getOrganizations, setOrganizations, setIsError);
+  }, []);
+
+  useEffect(() => {
+    if (users.length && organizations.length) {
+      const result = createUserCards(users, organizations);
+      
+      cardsRef.current = result;
+
+      setUserCards(result);
+      setLoading(false);
+    }
+  }, [users, organizations]);
+
+  const changeSelectedOrg = (orgName) => {
+    setSelectedOrg(orgName)
+
+    const filteredUsers = showUsersBySelectedOrgName(userCards, orgName)
+    setUserCards(filteredUsers);
   };
-  users = [];
-  organizations = [];
-  componentDidMount() {
-    getUsers()
-      .then((users) => (this.users = users))
-      .then(() => getOrganizations())
-      .then((organizations) => (this.organizations = organizations))
-      .then(() => this.setState({ loading: false }));
+
+  const resetSelectedOrg = () => {
+    setSelectedOrg(null);
+    setUserCards(cardsRef.current);
   }
 
-  selectOrg = (org) => {
-    this.setState({ selectedOrg: org });
-  };
-
-  resetSelectedOrg = () => {
-    this.setState({ selectedOrg: false });
-  };
-
-  render() {
-    if (this.state.loading) {
-      return "Loading...";
-    }
-
-    let users = [];
-
-    for (let i = 0; i < this.users.length; i++) {
-      const name = this.users[i].name;
-      let org;
-
-      for (let j = 0; j < this.organizations.length; j++) {
-        if (this.organizations[j].id === this.users[i].organization) {
-          org = this.organizations[j].name;
-        }
-      }
-
-      users.push(
-        <div className="user-list-item">
-          <div>name: {name}</div>
-          <div onClick={() => this.selectOrg(org)}>org: {org}</div>
-        </div>
-      );
-    }
-
-    if (this.state.selectedOrg) {
-      users = [];
-      for (let i = 0; i < this.users.length; i++) {
-        const orgId = this.organizations.find(
-          (o) => o.name === this.state.selectedOrg
-        ).id;
-
-        if (this.users[i].organization === orgId) {
-          users.push(
-            <div className="user-list-item">
-              <div>name: {this.users[i].name}</div>
-              <div>org: {this.state.selectedOrg}</div>
-            </div>
-          );
-        }
-      }
-    }
-
+  if (isLoading) {
     return (
-      <div>
-        {this.state.selectedOrg && (
-          <button onClick={() => this.resetSelectedOrg()}>
-            reset selected org
-          </button>
-        )}
-        <div className="user-list">{users}</div>
-      </div>
+      <Loader />
     );
   }
+
+  return (
+    <>
+      {isError ? 
+        <ErrorMessage /> : 
+        <UsersList 
+          userCards={userCards} 
+          selectedOrg={selectedOrg} 
+          resetSelectedOrg={resetSelectedOrg} 
+          changeSelectedOrg={changeSelectedOrg}
+        />
+      }
+    </>
+  )
 }
 
 export default App;
