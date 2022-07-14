@@ -1,7 +1,9 @@
 const createMapFromOrgs = (arr) => {
   const storage = new Map();
 
-  arr.map((current) => { storage.set(current.id, current.name) });
+  for (let i = 0; i < arr.length; i++) {
+    storage.set(arr[i].id, arr[i].name)
+  }
 
   return storage;
 }
@@ -15,3 +17,5 @@ export const createUserCards = (users, organization) => {
     return acc;
   }, []);
 }
+
+export const showUsersBySelectedOrgName = (usersCard, selectedName) => usersCard.filter((card) => card.organizationName === selectedName); 
